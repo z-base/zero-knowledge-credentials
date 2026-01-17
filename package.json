@@ -1,0 +1,46 @@
+{
+  "name": "zero-knowledge-credentials",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jortsupetterson/zero-knowledge-credentials.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jortsupetterson/zero-knowledge-credentials/issues"
+  },
+  "homepage": "https://github.com/jortsupetterson/zero-knowledge-credentials#readme",
+  "dependencies": {
+    "bytecodec": "^2.1.0",
+    "zeyra": "^2.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2",
+    "playwright": "^1.57.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false
+}
