@@ -1,2 +1,7 @@
 node_modules
 dist
+index.js
+test.js
+playwright-report
+test-results
+tests/fixtures/*.bundle.js

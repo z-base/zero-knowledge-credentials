@@ -1,8 +1,8 @@
 import { build } from "esbuild";
 
 build({
-  entryPoints: ["./dist/index.js"],
-  outfile: "./test.js",
+  entryPoints: ["./src/index.ts"],
+  outfile: "./index.js",
   bundle: true,
   external: ["node:*"],
   platform: "browser",

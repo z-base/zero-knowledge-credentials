@@ -6,12 +6,9 @@ function fromBase64UrlString(base64UrlString) {
 function toBase64String(base64UrlString) {
   let base64String = base64UrlString.replace(/-/g, "+").replace(/_/g, "/");
   const mod = base64String.length & 3;
-  if (mod === 2)
-    base64String += "==";
-  else if (mod === 3)
-    base64String += "=";
-  else if (mod !== 0)
-    throw new Error("Invalid base64url length");
+  if (mod === 2) base64String += "==";
+  else if (mod === 3) base64String += "=";
+  else if (mod !== 0) throw new Error("Invalid base64url length");
   return base64String;
 }
 function decodeBase64(base64String) {
@@ -28,23 +25,35 @@ function decodeBase64(base64String) {
 
 // node_modules/bytecodec/dist/0-HELPERS/index.js
 function isSharedArrayBuffer(buffer) {
-  return typeof SharedArrayBuffer !== "undefined" && buffer instanceof SharedArrayBuffer;
+  return (
+    typeof SharedArrayBuffer !== "undefined" &&
+    buffer instanceof SharedArrayBuffer
+  );
 }
 function asArrayBufferView(view) {
   return view;
 }
 function normalizeToUint8Array(input) {
   if (input instanceof Uint8Array)
-    return asArrayBufferView(isSharedArrayBuffer(input.buffer) ? new Uint8Array(input) : input);
+    return asArrayBufferView(
+      isSharedArrayBuffer(input.buffer) ? new Uint8Array(input) : input,
+    );
   if (input instanceof ArrayBuffer)
     return asArrayBufferView(new Uint8Array(input));
   if (ArrayBuffer.isView(input)) {
-    const view = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
-    return asArrayBufferView(isSharedArrayBuffer(view.buffer) ? new Uint8Array(view) : view);
+    const view = new Uint8Array(
+      input.buffer,
+      input.byteOffset,
+      input.byteLength,
+    );
+    return asArrayBufferView(
+      isSharedArrayBuffer(view.buffer) ? new Uint8Array(view) : view,
+    );
   }
-  if (Array.isArray(input))
-    return asArrayBufferView(new Uint8Array(input));
-  throw new TypeError("Expected a Uint8Array, ArrayBuffer, ArrayBufferView, or number[]");
+  if (Array.isArray(input)) return asArrayBufferView(new Uint8Array(input));
+  throw new TypeError(
+    "Expected a Uint8Array, ArrayBuffer, ArrayBufferView, or number[]",
+  );
 }
 var textEncoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : null;
 var textDecoder = typeof TextDecoder !== "undefined" ? new TextDecoder() : null;
@@ -80,8 +89,7 @@ function encodeBase64(bytes) {
 function fromString(text) {
   if (typeof text !== "string")
     throw new TypeError("fromString expects a string input");
-  if (textEncoder)
-    return textEncoder.encode(text);
+  if (textEncoder) return textEncoder.encode(text);
   if (typeof Buffer !== "undefined" && typeof Buffer.from === "function")
     return new Uint8Array(Buffer.from(text, "utf8"));
   throw new Error("No UTF-8 encoder available in this environment.");
@@ -90,8 +98,7 @@ function fromString(text) {
 // node_modules/bytecodec/dist/toString/index.js
 function toString(bytes) {
   const view = normalizeToUint8Array(bytes);
-  if (textDecoder)
-    return textDecoder.decode(view);
+  if (textDecoder) return textDecoder.decode(view);
   if (typeof Buffer !== "undefined" && typeof Buffer.from === "function")
     return Buffer.from(view).toString("utf8");
   throw new Error("No UTF-8 decoder available in this environment.");
@@ -162,22 +169,22 @@ async function decompressWithStream(bytes, format) {
 function concat(sources) {
   if (!Array.isArray(sources))
     throw new TypeError("concat expects an array of ByteSource items");
-  if (sources.length === 0)
-    return new Uint8Array(0);
+  if (sources.length === 0) return new Uint8Array(0);
   const arrays = sources.map((source, index) => {
     try {
       return normalizeToUint8Array(source);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new TypeError(`concat failed to normalize input at index ${index}: ${message}`);
+      throw new TypeError(
+        `concat failed to normalize input at index ${index}: ${message}`,
+      );
     }
   });
   const totalLength = arrays.reduce((sum, array) => sum + array.length, 0);
   const result = new Uint8Array(totalLength);
   let offset = 0;
   for (const array of arrays) {
-    if (array.length === 0)
-      continue;
+    if (array.length === 0) continue;
     result.set(array, offset);
     offset += array.length;
   }
@@ -188,11 +195,9 @@ function concat(sources) {
 function equals(x, y) {
   const a = normalizeToUint8Array(x);
   const b = normalizeToUint8Array(y);
-  if (a.byteLength !== b.byteLength)
-    return false;
+  if (a.byteLength !== b.byteLength) return false;
   let diff = 0;
-  for (let index = 0; index < a.length; index++)
-    diff |= a[index] ^ b[index];
+  for (let index = 0; index < a.length; index++) diff |= a[index] ^ b[index];
   return diff === 0;
 }
 
@@ -243,13 +248,25 @@ var Bytes = class {
 
 // node_modules/zeyra/dist/deriveRootKeys/deriveCipherKey.js
 async function deriveCipherKey(second) {
-  const key = await crypto.subtle.importKey("raw", second, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    second,
+    { name: "AES-GCM" },
+    true,
+    ["encrypt", "decrypt"],
+  );
   return await crypto.subtle.exportKey("jwk", key);
 }
 
 // node_modules/zeyra/dist/deriveRootKeys/deriveHmacKey.js
 async function deriveHmacKey(first) {
-  const key = await crypto.subtle.importKey("raw", first, { name: "HMAC", hash: "SHA-256" }, true, ["sign", "verify"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    first,
+    { name: "HMAC", hash: "SHA-256" },
+    true,
+    ["sign", "verify"],
+  );
   return await crypto.subtle.exportKey("jwk", key);
 }
 
@@ -258,16 +275,14 @@ function isArrayBuffer(value) {
   return value instanceof ArrayBuffer;
 }
 async function deriveRootKeys(prfResults) {
-  if (!prfResults)
-    return false;
+  if (!prfResults) return false;
   const { first, second } = prfResults;
-  if (!isArrayBuffer(first) || !isArrayBuffer(second))
-    return false;
+  if (!isArrayBuffer(first) || !isArrayBuffer(second)) return false;
   const firstHash = await crypto.subtle.digest("SHA-256", first);
   const secondHash = await crypto.subtle.digest("SHA-256", second);
   const [hmacJwk, cipherJwk] = await Promise.all([
     deriveHmacKey(firstHash),
-    deriveCipherKey(secondHash)
+    deriveCipherKey(secondHash),
   ]);
   return { hmacJwk, cipherJwk };
 }
@@ -284,27 +299,37 @@ var ZKCredentials = class {
   static #timeout = 6e4;
   static #mediation = "required";
   static #userVerification = "required";
-  static #prfInput1 = Bytes.toBufferSource(Bytes.fromString("credential-hmac-key-seed"));
-  static #prfInput2 = Bytes.toBufferSource(Bytes.fromString("credential-cipher-key-seed"));
+  static #prfInput1 = Bytes.toBufferSource(
+    Bytes.fromString("credential-hmac-key-seed"),
+  );
+  static #prfInput2 = Bytes.toBufferSource(
+    Bytes.fromString("credential-cipher-key-seed"),
+  );
   static async #assertSupported() {
     if (typeof window === "undefined")
       throw new ZKCredentialError("unsupported");
     if (!("PublicKeyCredential" in window))
       throw new ZKCredentialError("unsupported");
-    if (!navigator.credentials)
-      throw new ZKCredentialError("unsupported");
-    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+    if (!navigator.credentials) throw new ZKCredentialError("unsupported");
+    if (
+      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
+      "function"
+    ) {
       throw new ZKCredentialError("unsupported");
     }
-    const uv = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    if (!uv)
-      throw new ZKCredentialError("unsupported");
+    const uv =
+      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!uv) throw new ZKCredentialError("unsupported");
     const pcm = PublicKeyCredential.isConditionalMediationAvailable;
-    if (typeof pcm === "function" && !await pcm()) {
+    if (typeof pcm === "function" && !(await pcm())) {
       throw new ZKCredentialError("unsupported");
     }
   }
-  static async registerCredential(usersDisplayName, authenticatorAttachment, signal) {
+  static async registerCredential(
+    usersDisplayName,
+    authenticatorAttachment,
+    signal,
+  ) {
     try {
       await this.#assertSupported();
     } catch {
@@ -315,17 +340,17 @@ var ZKCredentials = class {
       user: {
         id: crypto.getRandomValues(new Uint8Array(32)),
         name: usersDisplayName,
-        displayName: usersDisplayName
+        displayName: usersDisplayName,
       },
       challenge: crypto.getRandomValues(new Uint8Array(32)),
       pubKeyCredParams: [
         { type: "public-key", alg: -7 },
-        { type: "public-key", alg: -257 }
+        { type: "public-key", alg: -257 },
       ],
       authenticatorSelection: {
         authenticatorAttachment,
         residentKey: "required",
-        userVerification: this.#userVerification
+        userVerification: this.#userVerification,
       },
       timeout: this.#timeout,
       attestation: "none",
@@ -333,16 +358,15 @@ var ZKCredentials = class {
         prf: {
           eval: {
             first: this.#prfInput1,
-            second: this.#prfInput2
-          }
-        }
-      }
+            second: this.#prfInput2,
+          },
+        },
+      },
     };
     try {
       await navigator.credentials.create({ publicKey, signal });
     } catch (error) {
-      if (error?.name === "AbortError")
-        throw new ZKCredentialError("aborted");
+      if (error?.name === "AbortError") throw new ZKCredentialError("aborted");
       if (error?.name === "NotAllowedError")
         throw new ZKCredentialError("user-denied");
       throw error;
@@ -367,17 +391,16 @@ var ZKCredentials = class {
             prf: {
               eval: {
                 first: this.#prfInput1,
-                second: this.#prfInput2
-              }
-            }
-          }
+                second: this.#prfInput2,
+              },
+            },
+          },
         },
         mediation: this.#mediation,
-        signal
+        signal,
       });
     } catch (error) {
-      if (error?.name === "AbortError")
-        throw new ZKCredentialError("aborted");
+      if (error?.name === "AbortError") throw new ZKCredentialError("aborted");
       if (error?.name === "NotAllowedError")
         throw new ZKCredentialError("user-denied");
       throw error;
@@ -386,28 +409,27 @@ var ZKCredentials = class {
       throw new ZKCredentialError("no-credential");
     const typed = credential;
     const prf = typed.getClientExtensionResults().prf;
-    if (!prf?.results)
-      throw new ZKCredentialError("prf-unavailable");
+    if (!prf?.results) throw new ZKCredentialError("prf-unavailable");
     let keys;
     try {
       keys = await deriveRootKeys(prf.results);
     } catch {
       throw new ZKCredentialError("key-derivation-failed");
     }
-    if (!keys)
-      throw new ZKCredentialError("key-derivation-failed");
+    if (!keys) throw new ZKCredentialError("key-derivation-failed");
     const idHash = await crypto.subtle.digest("SHA-256", typed.rawId);
     const id = Bytes.toBase64UrlString(idHash);
     return {
       id,
       hmacJwk: keys.hmacJwk,
-      cipherJwk: keys.cipherJwk
+      cipherJwk: keys.cipherJwk,
     };
   }
   static ifIsNotSupported = () => {
-    throw new ZKCredentialError("unsupported", "WebAuthn capability not supported on this device");
+    throw new ZKCredentialError(
+      "unsupported",
+      "WebAuthn capability not supported on this device",
+    );
   };
 };
-export {
-  ZKCredentials
-};
+export { ZKCredentials };

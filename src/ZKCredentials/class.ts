@@ -19,7 +19,7 @@ export class ZKCredentialError extends Error {
   readonly code: ZKCredentialErrorCode;
 
   constructor(code: ZKCredentialErrorCode, message?: string) {
-    super(message ?? code);
+    super(message ?? `{ZKCredentials} ${code}`);
     this.code = code;
   }
 }
@@ -175,7 +175,7 @@ export class ZKCredentials {
   static ifIsNotSupported: () => never = () => {
     throw new ZKCredentialError(
       "unsupported",
-      "WebAuthn capability not supported on this device",
+      "{ZKCredentials} WebAuthn capability not supported on this device",
     );
   };
 }

@@ -1,23 +1,36 @@
 {
   "name": "zero-knowledge-credentials",
   "version": "1.0.0",
-  "description": "",
-  "keywords": [],
+  "description": "Client-side WebAuthn credential discovery for strict zero-knowledge apps.",
+  "keywords": [
+    "webauthn",
+    "passkeys",
+    "prf",
+    "zero-knowledge",
+    "credentials",
+    "cryptography",
+    "authentication"
+  ],
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "build:demo": "node build.js",
+    "build:test": "node scripts/build-test-bundle.js",
+    "pretest": "node scripts/build-test-bundle.js",
+    "test": "playwright test",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jortsupetterson/zero-knowledge-credentials.git"
+    "url": "git+https://github.com/z-base/zero-knowledge-credentials.git"
   },
   "bugs": {
-    "url": "https://github.com/jortsupetterson/zero-knowledge-credentials/issues"
+    "url": "https://github.com/z-base/zero-knowledge-credentials/issues"
   },
-  "homepage": "https://github.com/jortsupetterson/zero-knowledge-credentials#readme",
+  "homepage": "https://github.com/z-base/zero-knowledge-credentials#readme",
   "dependencies": {
     "bytecodec": "^2.1.0",
     "zeyra": "^2.2.0"
@@ -39,6 +52,7 @@
   },
   "files": [
     "dist",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md"
   ],

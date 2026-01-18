@@ -24,7 +24,7 @@ A single discovered credential yields:
 
 - **`id`**  
   A stable, opaque routing identifier derived from the credential’s `rawId`  
-  (`SHA-256 → base64url`).  
+  (`SHA-256 -> base64url`).  
   Used to route encrypted state, backups, or envelopes.
 
 - **`cipherJwk`**  
@@ -130,6 +130,18 @@ All failures are explicit and semantic:
 
 Errors are instances of `ZKCredentialError` with a stable `code`.
 
+```ts
+import { ZKCredentials, ZKCredentialError } from "zero-knowledge-credentials";
+
+try {
+  await ZKCredentials.discoverCredential();
+} catch (error) {
+  if (error instanceof ZKCredentialError) {
+    console.log(error.code);
+  }
+}
+```
+
 ---
 
 ## What this package does _not_ do
@@ -156,6 +168,24 @@ Designed for systems where:
 - application graphs are discovered, not listed
 
 Typical downstream integrations include encrypted local-first state, zero-knowledge backups, and capability-based authorization systems.
+
+---
+
+## Development
+
+```sh
+npm run build
+```
+
+```sh
+npm run test
+# first time only:
+npx playwright install
+```
+
+```sh
+npm run build:demo
+```
 
 ---
 
