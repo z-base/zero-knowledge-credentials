@@ -67,7 +67,7 @@ let artifact = await cache.match(id) // {iv, ciphertext}
 if (!artifact) {
   const challengeRaw = await fetch(`/api/v1/artifact/${id}/challenge`)
   const challengeText = await challengeRaw.text()
-  const challengeBytes = Bytes.toBase64UrlString(challengeText)
+  const challengeBytes = Bytes.fromBase64UrlString(challengeText)
   const signature = await Cryptosuite.hmac.sign(hmacJwk, challengeBytes)
   const raw = await fetch(`/api/v1/artifact/${id}`, {
     headers: {
