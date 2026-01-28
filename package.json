@@ -1,5 +1,5 @@
 {
-  "name": "zero-knowledge-credentials",
+  "name": "@z-base/zero-knowledge-credentials",
   "version": "1.0.0",
   "description": "Client-side WebAuthn credential discovery for strict zero-knowledge apps.",
   "keywords": [
@@ -32,12 +32,12 @@
   },
   "homepage": "https://github.com/z-base/zero-knowledge-credentials#readme",
   "dependencies": {
-    "bytecodec": "^2.1.0",
-    "zeyra": "^2.2.0"
+    "@z-base/bytecodec": "^1.0.7",
+    "@z-base/cryptosuite": "^1.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.27.2",
-    "playwright": "^1.57.0",
+    "playwright": "^1.58.0",
     "typescript": "^5.9.3"
   },
   "engines": {

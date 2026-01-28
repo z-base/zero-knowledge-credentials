@@ -1,28 +1,12 @@
-import { Bytes } from "bytecodec";
-import { deriveRootKeys } from "zeyra";
+import { Bytes, generateNonce } from "bytecodec";
+import { deriveRootKeys, generateCipherKey, generateHmacKey } from "zeyra";
+import { ZKCredentialError, type ZKCredentialErrorCode } from "./errors.js";
 
 export type ZKCredential = {
   id: Base64URLString;
   hmacJwk: JsonWebKey;
   cipherJwk: JsonWebKey;
 };
-
-export type ZKCredentialErrorCode =
-  | "unsupported"
-  | "aborted"
-  | "user-denied"
-  | "no-credential"
-  | "prf-unavailable"
-  | "key-derivation-failed";
-
-export class ZKCredentialError extends Error {
-  readonly code: ZKCredentialErrorCode;
-
-  constructor(code: ZKCredentialErrorCode, message?: string) {
-    super(message ?? `{ZKCredentials} ${code}`);
-    this.code = code;
-  }
-}
 
 export class ZKCredentials {
   static readonly #timeout = 60_000;
@@ -70,7 +54,7 @@ export class ZKCredentials {
     try {
       await this.#assertSupported();
     } catch {
-      return this.ifIsNotSupported();
+      return this.onNotSupported();
     }
 
     const publicKey: PublicKeyCredentialCreationOptions = {
@@ -116,7 +100,7 @@ export class ZKCredentials {
     try {
       await this.#assertSupported();
     } catch {
-      return this.ifIsNotSupported();
+      return this.onNotSupported();
     }
 
     let credential: Credential | null;
@@ -172,7 +156,15 @@ export class ZKCredentials {
     };
   }
 
-  static ifIsNotSupported: () => never = () => {
+  static async generateCredentials(): Promise<ZKCredential> {
+    return {
+      id: generateNonce(),
+      hmacJwk: await generateHmacKey(),
+      cipherJwk: await generateCipherKey(),
+    };
+  }
+
+  static onNotSupported: () => never = () => {
     throw new ZKCredentialError(
       "unsupported",
       "{ZKCredentials} WebAuthn capability not supported on this device",
