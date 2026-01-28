@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/z-base/zero-knowledge-credentials/compare/v1.0.1...v1.0.2) (2026-01-28)
+
+
+### Bug Fixes
+
+* Class method naming scheme correction ([ec36f86](https://github.com/z-base/zero-knowledge-credentials/commit/ec36f869a56ba63051e5b08061df38e3c2e96ef5))
+* Class method naming scheme correction ([48dfa13](https://github.com/z-base/zero-knowledge-credentials/commit/48dfa1365ebff55fdf8cae10dabc7b02fe84caaa))
+* Class method naming scheme correction ([a2dc483](https://github.com/z-base/zero-knowledge-credentials/commit/a2dc483f2a05a702ed73b697f3c59ef5c12f0d38))
+
 ## [1.0.1](https://github.com/z-base/zero-knowledge-credentials/compare/v1.0.0...v1.0.1) (2026-01-28)
 
 

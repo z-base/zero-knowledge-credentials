@@ -1,6 +1,6 @@
 {
   "name": "@z-base/zero-knowledge-credentials",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "WebAuthn PRF credential discovery for zero-knowledge apps; derive opaque IDs and root keys from user-verifying authenticators.",
   "keywords": [
     "webauthn",
