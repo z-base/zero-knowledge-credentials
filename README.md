@@ -38,8 +38,11 @@ yarn add @z-base/zero-knowledge-credentials
 ### Register a credential
 
 ```ts
-import { ZKCredentials } from '@z-base/zero-knowledge-credentials'
-import { CipherCluster } from '@z-base/cryptosuite'
+import {
+  ZKCredentials,
+  type ZKCredential,
+  type ZKCredentialErrorCode,
+} from '@z-base/zero-knowledge-credentials'
 
 await ZKCredentials.registerCredential(
   'User display name',
