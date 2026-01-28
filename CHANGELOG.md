@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/z-base/zero-knowledge-credentials/compare/v1.0.0...v1.0.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* Unintended import in README usage section ([53ecdda](https://github.com/z-base/zero-knowledge-credentials/commit/53ecdda7b1d79e3292ac7f8cf7784345e14aecc2))
+
 ## 1.0.0 (2026-01-28)
 
 
