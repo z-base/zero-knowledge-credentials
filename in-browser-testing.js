@@ -1233,7 +1233,7 @@ var ZKCredentials = class {
       cipherJwk: keys.cipherJwk
     };
   }
-  static async generateCredentials() {
+  static async generateCredential() {
     return {
       id: await generateOID(),
       hmacJwk: await generateHMACKey(),

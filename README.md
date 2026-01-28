@@ -101,7 +101,7 @@ const profile = {
   },
 }
 
-const credentials = await ZKCredentials.generateCredentials()
+const credentials = await ZKCredentials.generateCredential()
 
 const id = credentials.id // resource routing identifier / OpaqueIdentifier
 const hmacJwk = credentials.hmacJwk // HMAC resource key / HMACJWK
@@ -160,7 +160,7 @@ Results:
 | Benchmark           | Result                             |
 | ------------------- | ---------------------------------- |
 | fromPRF             | 5,224 ops/s (0.191 ms/op, 200 ops) |
-| generateCredentials | 5,825 ops/s (0.172 ms/op, 50 ops)  |
+| generateCredential | 5,825 ops/s (0.172 ms/op, 50 ops)   |
 
 Results vary by machine.
 

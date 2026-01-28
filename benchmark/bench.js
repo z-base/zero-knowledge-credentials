@@ -72,9 +72,9 @@ const run = async () => {
     if (!result) throw new Error('fromPRF returned false')
   })
 
-  await bench('generateCredentials', generateIterations, async () => {
-    const result = await ZKCredentials.generateCredentials()
-    if (!result?.id) throw new Error('generateCredentials failed')
+  await bench('generateCredential', generateIterations, async () => {
+    const result = await ZKCredentials.generateCredential()
+    if (!result?.id) throw new Error('generateCredential failed')
   })
 }
 

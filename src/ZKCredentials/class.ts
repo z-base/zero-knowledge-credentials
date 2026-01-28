@@ -179,7 +179,7 @@ export class ZKCredentials {
     }
   }
 
-  static async generateCredentials(): Promise<ZKCredential> {
+  static async generateCredential(): Promise<ZKCredential> {
     return {
       id: await generateOID(),
       hmacJwk: await generateHMACKey(),

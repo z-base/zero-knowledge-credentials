@@ -501,10 +501,10 @@ test('discoverCredential passes expected get options', async () => {
   assert.equal(state.lastGetOptions.mediation, 'required')
 })
 
-test('generateCredentials returns expected shape', async () => {
+test('generateCredential returns expected shape', async () => {
   setGlobalCrypto(webcrypto)
 
-  const result = await ZKCredentials.generateCredentials()
+  const result = await ZKCredentials.generateCredential()
   assert.match(result.id, /^[A-Za-z0-9_-]{43}$/)
   assert.equal(result.hmacJwk.kty, 'oct')
   assert.equal(result.cipherJwk.kty, 'oct')
