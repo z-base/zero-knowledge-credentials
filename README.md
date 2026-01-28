@@ -87,7 +87,7 @@ const accountCredentials = await Cryptosuite.cipher.decrypt(cipherJwk, artifact)
 // const {profileCredentials, workspaceCredentials}  = resourceCredentials
 ```
 
-### Generate credentials
+### Generate credential
 
 ```ts
 import { Bytes } from '@z-base/bytecodec'
@@ -157,10 +157,10 @@ How it was run: `npm run bench`
 Environment: Node v22.14.0 (win32 x64)
 Results:
 
-| Benchmark           | Result                             |
-| ------------------- | ---------------------------------- |
-| fromPRF             | 5,224 ops/s (0.191 ms/op, 200 ops) |
-| generateCredential | 5,825 ops/s (0.172 ms/op, 50 ops)   |
+| Benchmark          | Result                             |
+| ------------------ | ---------------------------------- |
+| fromPRF            | 5,224 ops/s (0.191 ms/op, 200 ops) |
+| generateCredential | 5,825 ops/s (0.172 ms/op, 50 ops)  |
 
 Results vary by machine.
 
