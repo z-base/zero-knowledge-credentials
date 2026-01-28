@@ -1,60 +1,71 @@
-import { Bytes, generateNonce } from "bytecodec";
-import { deriveRootKeys, generateCipherKey, generateHmacKey } from "zeyra";
-import { ZKCredentialError, type ZKCredentialErrorCode } from "./errors.js";
+import { toBufferSource, fromString, toUint8Array } from '@z-base/bytecodec'
+import {
+  type OpaqueIdentifier,
+  type HMACJWK,
+  type CipherJWK,
+  generateOID,
+  generateHMACKey,
+  generateCipherKey,
+  deriveOID,
+} from '@z-base/cryptosuite'
+import { ZKCredentialError } from './errors.js'
+import { fromPRF } from './fromPRF.js'
 
 export type ZKCredential = {
-  id: Base64URLString;
-  hmacJwk: JsonWebKey;
-  cipherJwk: JsonWebKey;
-};
+  id: OpaqueIdentifier
+  hmacJwk: HMACJWK
+  cipherJwk: CipherJWK
+}
 
 export class ZKCredentials {
-  static readonly #timeout = 60_000;
-  static readonly #mediation: CredentialRequestOptions["mediation"] =
-    "required";
-  static readonly #userVerification: AuthenticatorSelectionCriteria["userVerification"] =
-    "required";
+  static readonly #timeout = 60_000
+  static readonly #mediation: CredentialRequestOptions['mediation'] = 'required'
+  static readonly #userVerification: AuthenticatorSelectionCriteria['userVerification'] =
+    'required'
 
-  static readonly #prfInput1: BufferSource = Bytes.toBufferSource(
-    Bytes.fromString("credential-hmac-key-seed"),
-  );
-  static readonly #prfInput2: BufferSource = Bytes.toBufferSource(
-    Bytes.fromString("credential-cipher-key-seed"),
-  );
+  static readonly #prfInput1: BufferSource = toBufferSource(
+    fromString('credential-hmac-key-seed')
+  )
+  static readonly #prfInput2: BufferSource = toBufferSource(
+    fromString('credential-cipher-key-seed')
+  )
 
-  static async #assertSupported(): Promise<void> {
-    if (typeof window === "undefined")
-      throw new ZKCredentialError("unsupported");
-    if (!("PublicKeyCredential" in window))
-      throw new ZKCredentialError("unsupported");
-    if (!navigator.credentials) throw new ZKCredentialError("unsupported");
+  static async #assertSupported(options?: {
+    requirePlatformUV?: boolean
+  }): Promise<void> {
+    if (typeof window === 'undefined')
+      throw new ZKCredentialError('unsupported')
+    if (!('PublicKeyCredential' in window))
+      throw new ZKCredentialError('unsupported')
+    if (!navigator.credentials) throw new ZKCredentialError('unsupported')
+    if (!window.crypto || !window.crypto.subtle)
+      throw new ZKCredentialError('unsupported')
 
-    if (
-      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
-      "function"
-    ) {
-      throw new ZKCredentialError("unsupported");
-    }
+    if (options?.requirePlatformUV) {
+      if (
+        typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
+        'function'
+      ) {
+        throw new ZKCredentialError('unsupported')
+      }
 
-    const uv =
-      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    if (!uv) throw new ZKCredentialError("unsupported");
-
-    const pcm = (PublicKeyCredential as any).isConditionalMediationAvailable;
-    if (typeof pcm === "function" && !(await pcm())) {
-      throw new ZKCredentialError("unsupported");
+      const uv =
+        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      if (!uv) throw new ZKCredentialError('unsupported')
     }
   }
 
   static async registerCredential(
     usersDisplayName: string,
     authenticatorAttachment: AuthenticatorAttachment,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ): Promise<void> {
     try {
-      await this.#assertSupported();
+      await this.#assertSupported({
+        requirePlatformUV: authenticatorAttachment === 'platform',
+      })
     } catch {
-      return this.onNotSupported();
+      return this.onNotSupported()
     }
 
     const publicKey: PublicKeyCredentialCreationOptions = {
@@ -66,16 +77,16 @@ export class ZKCredentials {
       },
       challenge: crypto.getRandomValues(new Uint8Array(32)),
       pubKeyCredParams: [
-        { type: "public-key", alg: -7 },
-        { type: "public-key", alg: -257 },
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 },
       ],
       authenticatorSelection: {
         authenticatorAttachment,
-        residentKey: "required",
+        residentKey: 'required',
         userVerification: this.#userVerification,
       },
       timeout: this.#timeout,
-      attestation: "none",
+      attestation: 'none',
       extensions: {
         prf: {
           eval: {
@@ -84,26 +95,32 @@ export class ZKCredentials {
           },
         },
       },
-    };
+    }
 
     try {
-      await navigator.credentials.create({ publicKey, signal });
+      await navigator.credentials.create({ publicKey, signal })
     } catch (error: any) {
-      if (error?.name === "AbortError") throw new ZKCredentialError("aborted");
-      if (error?.name === "NotAllowedError")
-        throw new ZKCredentialError("user-denied");
-      throw error;
+      if (error?.name === 'AbortError') throw new ZKCredentialError('aborted')
+      if (error?.name === 'NotAllowedError')
+        throw new ZKCredentialError('user-denied')
+      if (
+        error?.name === 'NotSupportedError' ||
+        error?.name === 'SecurityError'
+      ) {
+        throw new ZKCredentialError('unsupported')
+      }
+      throw error
     }
   }
 
   static async discoverCredential(signal?: AbortSignal): Promise<ZKCredential> {
     try {
-      await this.#assertSupported();
+      await this.#assertSupported()
     } catch {
-      return this.onNotSupported();
+      return this.onNotSupported()
     }
 
-    let credential: Credential | null;
+    let credential: Credential | null
     try {
       credential = await navigator.credentials.get({
         publicKey: {
@@ -123,51 +140,57 @@ export class ZKCredentials {
         },
         mediation: this.#mediation,
         signal,
-      });
+      })
     } catch (error: any) {
-      if (error?.name === "AbortError") throw new ZKCredentialError("aborted");
-      if (error?.name === "NotAllowedError")
-        throw new ZKCredentialError("user-denied");
-      throw error;
+      if (error?.name === 'AbortError') throw new ZKCredentialError('aborted')
+      if (error?.name === 'NotAllowedError')
+        throw new ZKCredentialError('user-denied')
+      if (
+        error?.name === 'NotSupportedError' ||
+        error?.name === 'SecurityError'
+      ) {
+        throw new ZKCredentialError('unsupported')
+      }
+      throw error
     }
 
-    if (!credential || credential.type !== "public-key")
-      throw new ZKCredentialError("no-credential");
+    if (!credential || credential.type !== 'public-key')
+      throw new ZKCredentialError('no-credential')
 
-    const typed = credential as PublicKeyCredential;
-    const prf = typed.getClientExtensionResults().prf;
-    if (!prf?.results) throw new ZKCredentialError("prf-unavailable");
+    const typed = credential as PublicKeyCredential
+    const prf = typed.getClientExtensionResults().prf
+    if (!prf?.results) throw new ZKCredentialError('prf-unavailable')
 
-    let keys;
+    let keys
     try {
-      keys = await deriveRootKeys(prf.results);
-    } catch {
-      throw new ZKCredentialError("key-derivation-failed");
+      keys = await fromPRF(prf.results)
+    } catch (error) {
+      if (error instanceof ZKCredentialError) throw error
+      throw new ZKCredentialError('key-derivation-failed')
     }
-    if (!keys) throw new ZKCredentialError("key-derivation-failed");
+    if (!keys) throw new ZKCredentialError('key-derivation-failed')
 
-    const idHash = await crypto.subtle.digest("SHA-256", typed.rawId);
-    const id = Bytes.toBase64UrlString(idHash);
+    const id = await deriveOID(toUint8Array(typed.rawId))
 
     return {
       id,
       hmacJwk: keys.hmacJwk,
       cipherJwk: keys.cipherJwk,
-    };
+    }
   }
 
   static async generateCredentials(): Promise<ZKCredential> {
     return {
-      id: generateNonce(),
-      hmacJwk: await generateHmacKey(),
+      id: await generateOID(),
+      hmacJwk: await generateHMACKey(),
       cipherJwk: await generateCipherKey(),
-    };
+    }
   }
 
   static onNotSupported: () => never = () => {
     throw new ZKCredentialError(
-      "unsupported",
-      "{ZKCredentials} WebAuthn capability not supported on this device",
-    );
-  };
+      'unsupported',
+      '{@z-base/zero-knowledge-credentials} WebAuthn capability not supported on this host'
+    )
+  }
 }

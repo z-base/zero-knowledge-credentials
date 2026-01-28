@@ -1,193 +1,165 @@
+[![npm version](https://img.shields.io/npm/v/@z-base/zero-knowledge-credentials)](https://www.npmjs.com/package/@z-base/zero-knowledge-credentials)
+[![CI](https://github.com/z-base/zero-knowledge-credentials/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/z-base/zero-knowledge-credentials/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/z-base/zero-knowledge-credentials/branch/master/graph/badge.svg)](https://codecov.io/gh/z-base/zero-knowledge-credentials)
+[![license](https://img.shields.io/npm/l/@z-base/zero-knowledge-credentials)](LICENSE)
+
 # zero-knowledge-credentials
 
-Client-side WebAuthn credential discovery for **strict zero-knowledge applications**.  
-This package deterministically derives routing and cryptographic root keys from a **user-verifying authenticator**, without accounts, identifiers, or server-side state.
-
-If the correct authenticator is present and the user verifies, state becomes discoverable.  
-If not, nothing exists.
-
----
-
-## Core idea
-
-There is no account lookup.
-
-There is no user database.
-
-Application state is **discovered**, not queried — and only by possessing the correct cryptographic seed derived from WebAuthn PRF.
-
----
-
-## What this package provides
-
-A single discovered credential yields:
-
-- **`id`**  
-  A stable, opaque routing identifier derived from the credential’s `rawId`  
-  (`SHA-256 -> base64url`).  
-  Used to route encrypted state, backups, or envelopes.
-
-- **`cipherJwk`**  
-  AES-GCM root key derived from WebAuthn PRF.  
-  Used to encrypt application state.
-
-- **`hmacJwk`**  
-  HMAC-SHA256 root key derived from WebAuthn PRF.  
-  Used to verify integrity, linkage, or authorization.
-
-These values are **derived at runtime**, never stored, never synced, and never reconstructible without the authenticator.
-
----
-
-## Mental model
-
-This package is intentionally small. It handles exactly one concern:
-
-> “Given a verified human on a device, can we deterministically derive the same cryptographic roots again?”
-
-Typical flow:
-
-1. Register a resident, user-verifying credential (once).
-2. Discover the credential later via user verification.
-3. Use the derived `id` to locate encrypted state.
-4. Use the derived keys to decrypt and verify that state.
-5. Recursively discover further state or capabilities.
-
-No index. No enumeration. No implicit trust.
-
----
+Client-side WebAuthn credential discovery for strict zero-knowledge apps. Deterministically derive a routing identifier and cryptographic root keys from a user-verifying authenticator, without accounts, identifiers, or server-side state.
 
 ## Compatibility
 
-- Requires **WebAuthn with user verification**
-  - Platform authenticators (passkeys / built-in)
-- Requires **WebAuthn PRF extension**
-- Browser environment only
-- ESM only
+- Runtimes: modern browsers with WebAuthn + PRF extension + user verification.
+- Module format: ESM-only (no CJS build).
+- Required globals / APIs: `window`, `navigator.credentials`, `PublicKeyCredential`, PRF extension, `crypto.subtle`, `crypto.getRandomValues`.
+- TypeScript: bundled types.
 
-If any required capability is missing, the API fails explicitly with a typed error.
+## Goals
 
----
+- Enable strict local-first zero-knowledge for browsers.
+- Deterministic, runtime-only derivation of an opaque ID and root keys.
+- No storage, no networking, no server-side requirements.
+- Explicit failure modes with stable error codes.
 
 ## Installation
 
 ```sh
-npm install zero-knowledge-credentials
+npm install @z-base/zero-knowledge-credentials
 # or
-pnpm add zero-knowledge-credentials
+pnpm add @z-base/zero-knowledge-credentials
 # or
-yarn add zero-knowledge-credentials
+yarn add @z-base/zero-knowledge-credentials
 ```
 
----
+## Usage
 
-## Registering a credential
+**These give a general idea and MUST NOT be interpreted as a full solution.**
 
-Creates a resident, user-verifying credential with PRF enabled.
+### Register a credential
 
 ```ts
-import { ZKCredentials } from "zero-knowledge-credentials";
+import { ZKCredentials } from '@z-base/zero-knowledge-credentials'
+import { CipherCluster } from '@z-base/cryptosuite'
 
 await ZKCredentials.registerCredential(
-  "User display name",
-  "platform", // or "cross-platform"
-);
+  'User display name',
+  'platform' // or 'cross-platform'
+)
 ```
 
-Nothing is returned.
-Nothing is persisted by this package.
-
----
-
-## Discovering a credential
-
-Performs user verification and derives root keys.
+### Discover a credential
 
 ```ts
-import { ZKCredentials } from "zero-knowledge-credentials";
+import { Bytes } from '@z-base/bytecodec'
+import { Cryptosuite } from '@z-base/cryptosuite'
+import { ZKCredentials } from '@z-base/zero-knowledge-credentials'
 
-const zk = await ZKCredentials.discoverCredential();
+const root = await ZKCredentials.discoverCredential()
 
-zk.id; // routing identifier
-zk.cipherJwk; // AES-GCM root key
-zk.hmacJwk; // HMAC root key
-```
+const id = root.id // routing identifier / OpaqueIdentifier
+const hmacJwk = root.hmacJwk // HMAC root key / HMACJWK
+const cipherJwk = root.cipherJwk // AES-GCM root key / CipherJWK
 
-If discovery fails, a typed error is thrown.
+const cache = await caches.open('opaque-blobs')
 
----
+let artifact = await cache.match(id) // {iv, ciphertext}
 
-## Error model
-
-All failures are explicit and semantic:
-
-- `unsupported` — WebAuthn / PRF / user-verification unavailable
-- `aborted` — aborted via `AbortSignal`
-- `user-denied` — user refused verification
-- `no-credential` — no matching resident credential
-- `prf-unavailable` — PRF extension missing or denied
-- `key-derivation-failed` — PRF output invalid or unusable
-
-Errors are instances of `ZKCredentialError` with a stable `code`.
-
-```ts
-import { ZKCredentials, ZKCredentialError } from "zero-knowledge-credentials";
-
-try {
-  await ZKCredentials.discoverCredential();
-} catch (error) {
-  if (error instanceof ZKCredentialError) {
-    console.log(error.code);
-  }
+if (!artifact) {
+  const challengeRaw = await fetch(`/api/v1/artifact/${id}/challenge`)
+  const challengeText = await challengeRaw.text()
+  const challengeBytes = Bytes.toBase64UrlString(challengeText)
+  const signature = await Cryptosuite.hmac.sign(hmacJwk, challengeBytes)
+  const raw = await fetch(`/api/v1/artifact/${id}`, {
+    headers: {
+      Authorization: Bytes.toBase64UrlString(signature),
+    },
+  })
+  artifact = await raw.json() // {iv, ciphertext}
 }
+
+const accountCredentials = await Cryptosuite.cipher.decrypt(cipherJwk, artifact)
+
+// const {id, hmacJwk, cipherJwk} = accountCredentials
+// repeat...
+// const {profileCredentials, workspaceCredentials}  = resourceCredentials
 ```
 
----
+### Generate credentials
 
-## What this package does _not_ do
+```ts
+import { Bytes } from '@z-base/bytecodec'
+import { Cryptosuite } from '@z-base/cryptosuite'
+import { ZKCredentials } from '@z-base/zero-knowledge-credentials'
 
-- No encryption helpers
-- No storage
-- No networking
-- No recovery flows
-- No account abstraction
+const profile = {
+  name: 'Bob',
+  preferences: {
+    theme: 'dark',
+  },
+}
 
-Those belong to higher layers.
+const credentials = await ZKCredentials.generateCredentials()
 
-This package is deliberately a **root primitive**, not a framework.
+const id = credentials.id // resource routing identifier / OpaqueIdentifier
+const hmacJwk = credentials.hmacJwk // HMAC resource key / HMACJWK
+const cipherJwk = credentials.cipherJwk // AES-GCM resource key / CipherJWK
 
----
-
-## Intended use
-
-Designed for systems where:
-
-- servers are blind relays
-- state is encrypted end-to-end
-- authority lives with the user, not infrastructure
-- application graphs are discovered, not listed
-
-Typical downstream integrations include encrypted local-first state, zero-knowledge backups, and capability-based authorization systems.
-
----
-
-## Development
-
-```sh
-npm run build
+const profileBytes = Bytes.fromJSON(profile)
+const artifact = await Cryptosuite.cipher.encrypt(cipherJwk, profileBytes)
+fetch(
+  `/api/v1/artifact/${id}`,
+  JSON.stringify({
+    verifier: hmacJwk,
+    state: {
+      iv: Bytes.toBase64UrlString(artifact.iv),
+      ciphertext: Bytes.toBase64UrlString(artifact.ciphertext),
+    },
+  }),
+  {
+    method: 'POST',
+  }
+)
 ```
 
-```sh
-npm run test
-# first time only:
-npx playwright install
-```
+## Runtime behavior
 
-```sh
-npm run build:demo
-```
+### Browsers
 
----
+Uses WebAuthn PRF outputs to derive:
+
+- `id` (SHA-256 -> base64url of `rawId`)
+- `cipherJwk` (AES-GCM)
+- `hmacJwk` (HMAC-SHA256)
+
+### Validation & errors
+
+All failures are explicit and semantic. Errors are instances of `ZKCredentialError` with a stable `code`:
+
+- `unsupported`
+- `aborted`
+- `user-denied`
+- `no-credential`
+- `prf-unavailable`
+- `key-derivation-failed`
+
+## Tests
+
+Suite: unit + integration (Node), E2E (Playwright)
+Matrix: Chromium / Firefox / WebKit + mobile emulation (Pixel 5, iPhone 12)
+Coverage: c8 — 100% statements/branches/functions/lines (dist via source maps)
+
+## Benchmarks
+
+How it was run: `npm run bench`
+Environment: Node v22.14.0 (win32 x64)
+Results:
+
+| Benchmark           | Result                             |
+| ------------------- | ---------------------------------- |
+| fromPRF             | 5,224 ops/s (0.191 ms/op, 200 ops) |
+| generateCredentials | 5,825 ops/s (0.172 ms/op, 50 ops)  |
+
+Results vary by machine.
 
 ## License
 

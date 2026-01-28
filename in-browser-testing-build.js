@@ -1,10 +1,10 @@
-import { build } from "esbuild";
+import { build } from 'esbuild'
 
 build({
-  entryPoints: ["./src/index.ts"],
-  outfile: "./index.js",
+  entryPoints: ['./in-browser-testing-libs.js'],
+  outfile: './in-browser-testing.js',
   bundle: true,
-  external: ["node:*"],
-  platform: "browser",
-  format: "esm",
-});
+  external: ['node:*'],
+  platform: 'browser',
+  format: 'esm',
+})

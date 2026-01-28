@@ -1,16 +1,16 @@
 export type ZKCredentialErrorCode =
-  | "unsupported"
-  | "aborted"
-  | "user-denied"
-  | "no-credential"
-  | "prf-unavailable"
-  | "key-derivation-failed";
+  | 'unsupported'
+  | 'aborted'
+  | 'user-denied'
+  | 'no-credential'
+  | 'prf-unavailable'
+  | 'key-derivation-failed'
 
 export class ZKCredentialError extends Error {
-  readonly code: ZKCredentialErrorCode;
+  readonly code: ZKCredentialErrorCode
 
   constructor(code: ZKCredentialErrorCode, message?: string) {
-    super(message ?? `{ZKCredentials} ${code}`);
-    this.code = code;
+    super(message ?? `{@z-base/zero-knowledge-credentials} ${code}`)
+    this.code = code
   }
 }

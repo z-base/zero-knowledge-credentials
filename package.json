@@ -1,48 +1,30 @@
 {
   "name": "@z-base/zero-knowledge-credentials",
   "version": "1.0.0",
-  "description": "Client-side WebAuthn credential discovery for strict zero-knowledge apps.",
+  "description": "WebAuthn PRF credential discovery for zero-knowledge apps; derive opaque IDs and root keys from user-verifying authenticators.",
   "keywords": [
     "webauthn",
     "passkeys",
     "prf",
+    "fido2",
+    "hardware-tokens",
     "zero-knowledge",
     "credentials",
+    "opaque-identifier",
     "cryptography",
-    "authentication"
+    "authentication",
+    "webcrypto",
+    "aes-gcm",
+    "hmac",
+    "typescript",
+    "cryptosuite",
+    "bytecodec",
+    "z-base"
   ],
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "build:demo": "node build.js",
-    "build:test": "node scripts/build-test-bundle.js",
-    "pretest": "node scripts/build-test-bundle.js",
-    "test": "playwright test",
-    "prepublishOnly": "npm run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/z-base/zero-knowledge-credentials.git"
-  },
-  "bugs": {
-    "url": "https://github.com/z-base/zero-knowledge-credentials/issues"
-  },
-  "homepage": "https://github.com/z-base/zero-knowledge-credentials#readme",
-  "dependencies": {
-    "@z-base/bytecodec": "^1.0.7",
-    "@z-base/cryptosuite": "^1.0.0"
-  },
-  "devDependencies": {
-    "esbuild": "^0.27.2",
-    "playwright": "^1.58.0",
-    "typescript": "^5.9.3"
-  },
-  "engines": {
-    "node": ">=18"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -52,9 +34,56 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md",
     "LICENSE",
     "README.md"
   ],
-  "sideEffects": false
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/z-base/zero-knowledge-credentials.git"
+  },
+  "bugs": {
+    "url": "https://github.com/z-base/zero-knowledge-credentials/issues"
+  },
+  "homepage": "https://github.com/z-base/zero-knowledge-credentials#readme",
+  "scripts": {
+    "format": "prettier . --write",
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node test/run-coverage.mjs && node test/e2e/run.mjs",
+    "bench": "npm run build && node benchmark/bench.js",
+    "prepare": "husky",
+    "prepublishOnly": "npm run test && npm run bench"
+  },
+  "c8": {
+    "all": true,
+    "include": [
+      "dist/**/*.js"
+    ],
+    "exclude": [
+      "dist/**/*.d.ts",
+      "test/**",
+      "benchmark/**",
+      "playwright.config.ts"
+    ]
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@z-base/bytecodec": "^1.1.0",
+    "@z-base/cryptosuite": "^1.0.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.0.10",
+    "c8": "^10.1.3",
+    "esbuild": "^0.27.2",
+    "fast-glob": "^3.3.3",
+    "husky": "^9.1.7",
+    "playwright": "^1.58.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.6.3"
+  }
 }

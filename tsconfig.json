@@ -10,6 +10,9 @@
     "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
+    "noImplicitReturns": true,
     "lib": ["es2024", "dom", "dom.iterable", "webworker"]
   },
   "include": ["src"]
