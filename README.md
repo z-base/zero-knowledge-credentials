@@ -87,7 +87,7 @@ const accountCredentials = await Cryptosuite.cipher.decrypt(cipherJwk, artifact)
 // const {profileCredentials, workspaceCredentials}  = resourceCredentials
 ```
 
-### Generate credential
+### Generate a credential
 
 ```ts
 import { Bytes } from '@z-base/bytecodec'
